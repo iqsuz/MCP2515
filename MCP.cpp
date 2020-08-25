@@ -1,5 +1,4 @@
 #include "MCP.h"
-#include "MCP_Hal.h"
 
 /********************************************************************/
 MCP::MCP(uint8_t _CS){
@@ -27,16 +26,17 @@ uint8_t MCP::readRegister(uint8_t address){
 }
 
 /********************************************************************/
-uint8_t MCP::readRegister(uint8_t address, uint8_t len, uint8_t *buff){
+void MCP::readRegister(uint8_t address, uint8_t len, uint8_t *buff){
     uint8_t status;
 
     CSLow();
-    status = SPIWrite(SPI_RD);
+    SPIWrite(SPI_RD);
     SPIWrite(address);
 
     while(len--){
         *buff++ = SPIWrite(SPI_DUMMY);
     }
+
     CSHigh();
 
     return status;
@@ -62,3 +62,36 @@ void MCP::write(uint8_t address, uint8_t len, uint8_t *data){
     }
     CSHigh();
 }
+
+/********************************************************************/
+uint8_t MCP::readStatus(){
+    uint8_t retVal;
+    
+    CSLow();
+    SPIWrite(SPI_RD_STAT);
+    retVal = SPIWrite(SPI_DUMMY);
+    CSHigh();
+}
+
+/********************************************************************/
+uint8_t MCP::readRXStat(){
+    uint8_t retVal;
+    
+    CSLow();
+    SPIWrite(SPI_RX_STAT);
+    retVal = SPIWrite(SPI_DUMMY);
+    CSHigh();
+}
+
+/********************************************************************/
+void MCP::bitModify(uint8_t address, uint8_t mask, uint8_t data){
+    CSLow();
+    SPIWrite(SPI_BIT_MOD);
+    SPIWrite(address);
+    SPIWrite(mask);
+    SPIWrite(data);
+    CSHigh();
+}
+
+
+
