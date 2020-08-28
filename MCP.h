@@ -25,10 +25,33 @@
     #define SPI_BIT_MOD         0x05
     //End SPI_HEADERS
 
+    //Start REGISTERS
+    #define CANCTRL 0xFH
+    #define CANSTAT 0xEH
+    //End REGISTER
+
+
+    //Start CONSTANT FOR OP MODE
+    #define NORMAL_OP_MODE      0x00
+    #define SLEEP_MODE          0x20
+    #define LOOPBACK_MODE       0x40
+    #define LISTEN_ONLY_MODE    0x60
+    #define CONFIG_MODE         0x80
+    //End CONSTANT FOR OP MODE
+    
     class MCP{
     private:
 
     public:
+        void reset();
+        uint8_t readRegister(uint8_t );
+        void readRegister(uint8_t, uint8_t, uint8_t *);
+        void write(uint8_t, uint8_t );
+        void write(uint8_t, uint8_t, uint8_t *);
+        uint8_t readStatus();
+        uint8_t readRXStat();
+        void bitModify(uint8_t, uint8_t, uint8_t );
+        uint8_t changeMode(uint8_t );
 
     };
 
