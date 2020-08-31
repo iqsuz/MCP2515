@@ -120,7 +120,7 @@ void MCP::bitModify(uint8_t address, uint8_t mask, uint8_t data){
 /********************************************************************/
 /*This function changes chip mode based on constant defined in MCP.h under CONSTANT FOR OP MODE.
 This function returns with CANSTAT value*/
-uint8_t MCP::changeMode(uint8_t mode){
+uint8_t MCP::changeMode(MCP::OP_MODE mode){
     bitModify(CANCTRL, MASK_MODE, mode);
     return readRegister(CANSTAT);
     }
@@ -131,8 +131,8 @@ uint8_t MCP::changeMode(uint8_t mode){
 TXBn should be choosen from default of TXB0,TXB1,TXB2
 tx_priority should be choosen from default of TX BUFF PRIORITY
 */
-uint8_t MCP::setPriority(uint8_t TXBn, uint8_t tx_priority){
-    switch(TXBn){
+uint8_t MCP::setPriority(MCP::TXBn TX, MCP::PRIORITY tx_priority){
+    switch(TX){
         case 0:
             bitModify(TXB0CTRL, MASK_PRIORITY, tx_priority);
             return readRegister(TXBOCTRL);

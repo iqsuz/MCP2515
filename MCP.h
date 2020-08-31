@@ -72,17 +72,7 @@
     #define TXB1DLC     0x45
     #define TXB2DLC     0x55
     #define TXTRSCTRL   0x0D
-    #define TXB0         0x00
-    #define TXB1         0x01
-    #define TXB2         0x02
     //End REGISTER
-
-    //Start TX BUFF PRIORITY
-    #define PRIORITY_LOW            0x00
-    #define PRIORITY_MEDIOCRE       0x01
-    #define PRIORITY_INTERMEDIATE   0x02
-    #define PRIORITY_HIGH           0x03
-    //End TX BUFF PRIORITY
 
     //Start CONSTANT FOR OP MODE
     #define NORMAL_OP_MODE      0x00
@@ -99,18 +89,46 @@
     //End MASK CONSTANT
 
     class MCP{
-    private:
+        private:
 
-    public:
-        void reset();
-        uint8_t readRegister(uint8_t );
-        void readRegister(uint8_t, uint8_t, uint8_t *);
-        void writeRegister(uint8_t, uint8_t );
-        void writeRegister(uint8_t, uint8_t, uint8_t *);
-        uint8_t readStatus();
-        uint8_t readRXStat();
-        void bitModify(uint8_t, uint8_t, uint8_t );
-        uint8_t changeMode(uint8_t );
+        public:
+            enum TXBn : uint8_t {
+                TXB0,
+                TXB1,
+                TXB2
+            };
+
+            enum PRIORITY : uint8_t {
+                PRIORITY_TRIVIAL,
+                PRIORITY_LOW,
+                PRIORITY_INTERMEDIATE,
+                PRIORITY_HIGH
+                PRIO
+            };
+
+            enum OP_MODE : uint8_t {
+                NORMAL_OP_MODE = 0x00,
+                SLEEP_MODE = 0x20,
+                LOOPBACK_MODE = 0x40,
+                LISTEN_ONLY_MODE = 0x60,
+                CONFIG_MODE = 0x80
+            };
+
+            struct frame {
+
+            };
+
+
+        public:
+            void reset();
+            uint8_t readRegister(uint8_t );
+            void readRegister(uint8_t, uint8_t, uint8_t *);
+            void writeRegister(uint8_t, uint8_t );
+            void writeRegister(uint8_t, uint8_t, uint8_t *);
+            uint8_t readStatus();
+            uint8_t readRXStat();
+            void bitModify(uint8_t, uint8_t, uint8_t );
+            uint8_t changeMode(uint8_t );
 
     };
 
