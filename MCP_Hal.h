@@ -9,7 +9,7 @@
     #define SPI_DUMMY 0x00
 
     uint8_t SPICS;
-    
+
     void SPIInit(uint8_t );
     uint8_t SPIWrite(uint8_t );
 

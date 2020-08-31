@@ -6,7 +6,7 @@ MCP::MCP(uint8_t _CS){
 }
 
 /********************************************************************/
-/*Reset internal registers to default states, 
+/*Reset internal registers to default states,
 this function run chip in Configuration Mode.*/
 void MCP::reset(){
     CSLow();
@@ -29,7 +29,7 @@ uint8_t MCP::readRegister(uint8_t address){
 }
 
 /********************************************************************/
-/*Reads consecutive registers with length of len, 
+/*Reads consecutive registers with length of len,
 returned values stored in buff pointer array. */
 void MCP::readRegister(uint8_t address, uint8_t len, uint8_t *buff){
     uint8_t status;
@@ -49,7 +49,7 @@ void MCP::readRegister(uint8_t address, uint8_t len, uint8_t *buff){
 
 /********************************************************************/
 /*Writes given data to given register address.*/
-void MCP::write(uint8_t address, uint8_t data){
+void MCP::writeRegister(uint8_t address, uint8_t data){
     CSLow();
     SPIWrite(SPI_WR);
     SPIWrite(address);
@@ -59,7 +59,7 @@ void MCP::write(uint8_t address, uint8_t data){
 
 /********************************************************************/
 /*Write consecutive dataset to given address with lenght of len.*/
-void MCP::write(uint8_t address, uint8_t len, uint8_t *data){
+void MCP::writeRegister(uint8_t address, uint8_t len, uint8_t *data){
     CSLow();
     SPIWrite(SPI_WR);
     SPIWrite(address);
@@ -83,7 +83,7 @@ Bit 7: TX2IF
 */
 uint8_t MCP::readStatus(){
     uint8_t retVal;
-    
+
     CSLow();
     SPIWrite(SPI_RD_STAT);
     retVal = SPIWrite(SPI_DUMMY);
@@ -93,11 +93,11 @@ uint8_t MCP::readStatus(){
 /********************************************************************/
 /*
 This function returns received data information.
-For more info about this function return value, 
+For more info about this function return value,
 refer Figure 12-9 of this chip datasheet.*/
 uint8_t MCP::readRXStat(){
     uint8_t retVal;
-    
+
     CSLow();
     SPIWrite(SPI_RX_STAT);
     retVal = SPIWrite(SPI_DUMMY);
@@ -106,7 +106,7 @@ uint8_t MCP::readRXStat(){
 
 /********************************************************************/
 /*This function manipulates bits of given register address.
-Data in the register is masked with mask parameter 
+Data in the register is masked with mask parameter
 then masked bits are changed with data.*/
 void MCP::bitModify(uint8_t address, uint8_t mask, uint8_t data){
     CSLow();
@@ -118,11 +118,30 @@ void MCP::bitModify(uint8_t address, uint8_t mask, uint8_t data){
 }
 
 /********************************************************************/
-/*This function changes chip mode based on constant defined in MCP.h under CONSTANT FOR OP MODE. 
+/*This function changes chip mode based on constant defined in MCP.h under CONSTANT FOR OP MODE.
 This function returns with CANSTAT value*/
 uint8_t MCP::changeMode(uint8_t mode){
-    bitModify(CANCTRL, MODE_MASK, mode);
+    bitModify(CANCTRL, MASK_MODE, mode);
     return readRegister(CANSTAT);
+    }
+}
+
+/********************************************************************/
+/*This function set priority of TX buffer in four different levels.
+TXBn should be choosen from default of TXB0,TXB1,TXB2
+tx_priority should be choosen from default of TX BUFF PRIORITY
+*/
+uint8_t MCP::setPriority(uint8_t TXBn, uint8_t tx_priority){
+    switch(TXBn){
+        case 0:
+            bitModify(TXB0CTRL, MASK_PRIORITY, tx_priority);
+            return readRegister(TXBOCTRL);
+        case 1:
+            bitModify(TXB1CTRL, MASK_PRIORITY, tx_priority);
+            return readRegister(TXB1CTRL);
+        case 2:
+            bitModify(TXB2CTRL, MASK_PRIORITY, tx_priority);
+            return readRegister(TXB2CTRL);
     }
 }
 

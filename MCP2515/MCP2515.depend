@@ -1,0 +1,4 @@
+# depslib dependency file v1.0
+1598828013 source:/home/pi/Desktop/MCP2515/MCP2515/main.cpp
+	<iostream>
+
