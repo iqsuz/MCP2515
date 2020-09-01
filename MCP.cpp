@@ -1,6 +1,7 @@
 #include "MCP.h"
 
 /********************************************************************/
+/*Construction function initialize SPI by using HAL lib.*/
 MCP::MCP(uint8_t _CS){
     SPIInit(_CS);
 }
@@ -32,8 +33,6 @@ uint8_t MCP::readRegister(uint8_t address){
 /*Reads consecutive registers with length of len,
 returned values stored in buff pointer array. */
 void MCP::readRegister(uint8_t address, uint8_t len, uint8_t *buff){
-    uint8_t status;
-
     CSLow();
     SPIWrite(SPI_RD);
     SPIWrite(address);
@@ -43,8 +42,6 @@ void MCP::readRegister(uint8_t address, uint8_t len, uint8_t *buff){
     }
 
     CSHigh();
-
-    return status;
 }
 
 /********************************************************************/
@@ -108,19 +105,30 @@ uint8_t MCP::readRXStat(){
 /*This function manipulates bits of given register address.
 Data in the register is masked with mask parameter
 then masked bits are changed with data.*/
-void MCP::bitModify(uint8_t address, uint8_t mask, uint8_t data){
+uint8_t MCP::bitModify(uint8_t address, uint8_t mask, uint8_t data){
+    uint8_t retVal;
+
     CSLow();
     SPIWrite(SPI_BIT_MOD);
     SPIWrite(address);
     SPIWrite(mask);
     SPIWrite(data);
     CSHigh();
+
+    CSLow();
+    retval = readRegister(address);
+    CSHigh();
+
+    return retVal;
 }
 
 /********************************************************************/
 /*This function changes chip mode based on constant defined in MCP.h under CONSTANT FOR OP MODE.
-This function returns with CANSTAT value*/
-uint8_t MCP::changeMode(MCP::OP_MODE mode){
+This function returns with CANSTAT value
+!!!!!!!!!!!!THIS FUNCTION WILL NOT CHANGE OPERATION MODE
+UNTIL ALL PENDING TRANSMISSION COMPLETED!!!!!!!!!!!
+*/
+uint8_t MCP::changeMode(MCP::CHIP_MODE mode){
     bitModify(CANCTRL, MASK_MODE, mode);
     return readRegister(CANSTAT);
     }
@@ -128,20 +136,19 @@ uint8_t MCP::changeMode(MCP::OP_MODE mode){
 
 /********************************************************************/
 /*This function set priority of TX buffer in four different levels.
-TXBn should be choosen from default of TXB0,TXB1,TXB2
-tx_priority should be choosen from default of TX BUFF PRIORITY
+tx should be MCP::TXBn type, tx_priority should be MCP::TXBn_PRIORITY.
 */
-uint8_t MCP::setPriority(MCP::TXBn TX, MCP::PRIORITY tx_priority){
-    switch(TX){
-        case 0:
+uint8_t MCP::setPriority(MCP::TXBn tx, MCP::TXBn_PRIORITY tx_priority){
+    switch(tx){
+        case MCP::TXB0:
             bitModify(TXB0CTRL, MASK_PRIORITY, tx_priority);
-            return readRegister(TXBOCTRL);
-        case 1:
+            return readRegister(TXB0CTRL);
+        case MCP::TXB1:
             bitModify(TXB1CTRL, MASK_PRIORITY, tx_priority);
-            return readRegister(TXB1CTRL);
-        case 2:
+            return readRegister(TXB0CTRL);
+        case MCP::TXB2:
             bitModify(TXB2CTRL, MASK_PRIORITY, tx_priority);
-            return readRegister(TXB2CTRL);
+            return readRegister(TXB1CTRL);
     }
 }
 

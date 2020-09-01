@@ -28,7 +28,7 @@
     //Start REGISTERS
     #define CANCTRL     0xFH
     #define CANSTAT     0xEH
-        //TX Responsible Registers
+    //TX Responsible Registers
     #define TXB0CTRL    0x30
     #define TXB1CTRL    0x40
     #define TXB2CTRL    0x50
@@ -74,61 +74,65 @@
     #define TXTRSCTRL   0x0D
     //End REGISTER
 
-    //Start CONSTANT FOR OP MODE
-    #define NORMAL_OP_MODE      0x00
-    #define SLEEP_MODE          0x20
-    #define LOOPBACK_MODE       0x40
-    #define LISTEN_ONLY_MODE    0x60
-    #define CONFIG_MODE         0x80
-    //End CONSTANT FOR OP MODE
-
+    //Start TX BUFF PRIORITY
+    #define PRIORITY_LOW            0x00
+    #define PRIORITY_MEDIOCRE       0x01
+    #define PRIORITY_INTERMEDIATE   0x02
+    #define PRIORITY_HIGH           0x03
+    //End TX BUFF PRIORITY
 
     //Start MASK CONSTANT
     #define MASK_MODE           0xE0
     #define MASK_PRIORITY       0x03
     //End MASK CONSTANT
 
+    //Start CONSTANT
+    #define MAX_TX_BYTE     8
+    //End CONSTANT
+
     class MCP{
-        private:
+    private:
 
-        public:
-            enum TXBn : uint8_t {
-                TXB0,
-                TXB1,
-                TXB2
-            };
+    public:
+        enum CHIP_MODE : uint8_t {
+            NORMAL_MODE = 0x00,
+            SLEEP_MODE = 0x20,
+            LOOPBACK_MODE = 0x40,
+            LISTEN_ONLY_MODE = 0x60,
+            CONFIG_MODE = 0x80
+        };
 
-            enum PRIORITY : uint8_t {
-                PRIORITY_TRIVIAL,
-                PRIORITY_LOW,
-                PRIORITY_INTERMEDIATE,
-                PRIORITY_HIGH
-                PRIO
-            };
+        enum TXBn : uint8_t {
+            TXB0,
+            TXB1,
+            TXB2
+        };
 
-            enum OP_MODE : uint8_t {
-                NORMAL_OP_MODE = 0x00,
-                SLEEP_MODE = 0x20,
-                LOOPBACK_MODE = 0x40,
-                LISTEN_ONLY_MODE = 0x60,
-                CONFIG_MODE = 0x80
-            };
+        enum TXBn_PRIORITY : uint8_t {
+            PRIORITY_TRIVIAL,
+            PRIORITY_LOW,
+            PRIORITY_INTERMEDIATE,
+            PRIORITY_HIGH
+        };
 
-            struct frame {
+        struct CanFrame{
+            uint32_t can_id;
+            uint8_t exid;
+            uint8_t rtr;
+            uint8_t dlc;
+            uint8_t data[MAX_TX_BYTE];
+        };
 
-            };
-
-
-        public:
-            void reset();
-            uint8_t readRegister(uint8_t );
-            void readRegister(uint8_t, uint8_t, uint8_t *);
-            void writeRegister(uint8_t, uint8_t );
-            void writeRegister(uint8_t, uint8_t, uint8_t *);
-            uint8_t readStatus();
-            uint8_t readRXStat();
-            void bitModify(uint8_t, uint8_t, uint8_t );
-            uint8_t changeMode(uint8_t );
+    public:
+        void reset();
+        uint8_t readRegister(uint8_t );
+        void readRegister(uint8_t, uint8_t, uint8_t *);
+        void writeRegister(uint8_t, uint8_t );
+        void writeRegister(uint8_t, uint8_t, uint8_t *);
+        uint8_t readStatus();
+        uint8_t readRXStat();
+        uint8_t bitModify(uint8_t, uint8_t, uint8_t );
+        uint8_t changeMode(uint8_t );
 
     };
 
