@@ -26,8 +26,8 @@
     //End SPI_HEADERS
 
     //Start REGISTERS
-    #define CANCTRL     0xFH
-    #define CANSTAT     0xEH
+    #define CANCTRL     0x0F
+    #define CANSTAT     0x0E
     //TX Responsible Registers
     #define TXB0CTRL    0x30
     #define TXB1CTRL    0x40
@@ -74,20 +74,15 @@
     #define TXTRSCTRL   0x0D
     //End REGISTER
 
-    //Start TX BUFF PRIORITY
-    #define PRIORITY_LOW            0x00
-    #define PRIORITY_MEDIOCRE       0x01
-    #define PRIORITY_INTERMEDIATE   0x02
-    #define PRIORITY_HIGH           0x03
-    //End TX BUFF PRIORITY
-
     //Start MASK CONSTANT
     #define MASK_MODE           0xE0
     #define MASK_PRIORITY       0x03
+    #define MASK_CANID_SIDL     (uint32_t) 0x00000007
+    #define MASK_CANID_EIDH     (uint32_t) 0x00000003
     //End MASK CONSTANT
 
     //Start CONSTANT
-    #define MAX_TX_BYTE     8
+    #define MAX_TX_DATA_LEN     8
     //End CONSTANT
 
     class MCP{
@@ -115,15 +110,22 @@
             PRIORITY_HIGH
         };
 
-        struct CanFrame{
+        struct CanFrame {
             uint32_t can_id;
-            uint8_t exid;
+            uint8_t ext;
             uint8_t rtr;
             uint8_t dlc;
-            uint8_t data[MAX_TX_BYTE];
+            uint8_t data[MAX_TX_DATA_LEN];
+        };
+
+        enum MCP_RETVAL : uint8_t {
+            MCP_ERROR,
+            MCP_SMT     //delete this
+
         };
 
     public:
+        MCP(uint8_t );
         void reset();
         uint8_t readRegister(uint8_t );
         void readRegister(uint8_t, uint8_t, uint8_t *);
@@ -132,7 +134,9 @@
         uint8_t readStatus();
         uint8_t readRXStat();
         uint8_t bitModify(uint8_t, uint8_t, uint8_t );
-        uint8_t changeMode(uint8_t );
+        uint8_t changeMode(MCP::CHIP_MODE );
+        uint8_t setPriority(MCP::TXBn, MCP::TXBn_PRIORITY );
+        MCP_RETVAL sendMessage(MCP::TXBn, uint32_t, uint8_t, uint8_t, uint8_t *);
 
     };
 

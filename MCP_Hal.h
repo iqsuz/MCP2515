@@ -1,7 +1,8 @@
 #ifndef _MCP_HAL_H_
 #define _MCP_HAL_H_
 
-    #include <SPI.h>
+    //#include <SPI.h>
+    #include <stdint.h>
 
     #define SPI_SPEED 16000000
     #define SPI_DATA_ORDER MSBFIRST
@@ -12,5 +13,7 @@
 
     void SPIInit(uint8_t );
     uint8_t SPIWrite(uint8_t );
+    void CSLow();
+    void CSHigh();
 
 #endif
