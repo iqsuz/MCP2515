@@ -75,10 +75,10 @@
     //End REGISTER
 
     //Start MASK CONSTANT
-    #define MASK_MODE           0xE0
-    #define MASK_PRIORITY       0x03
-    #define MASK_CANID_SIDL     (uint32_t) 0x00000007
-    #define MASK_CANID_EIDH     (uint32_t) 0x00000003
+    #define MASK_MODE               0xE0
+    #define MASK_PRIORITY           0x03
+    #define MASK_CANID_SIDL         (uint32_t) 0x00000007
+    #define MASK_CANID_EID1716      (uint32_t) 0x00000003
     //End MASK CONSTANT
 
     //Start CONSTANT
@@ -120,7 +120,7 @@
 
         enum MCP_RETVAL : uint8_t {
             MCP_ERROR,
-            MCP_SMT     //delete this
+            MCP_OK     //delete this
 
         };
 

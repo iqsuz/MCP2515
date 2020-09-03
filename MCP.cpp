@@ -169,39 +169,43 @@ tx should be MCP::TXBn type, tx_priority should be MCP::TXBn_PRIORITY.
 */
 
 MCP::MCP_RETVAL MCP::sendMessage(MCP::TXBn tx, uint32_t can_id, uint8_t ext, uint8_t dlc, uint8_t *data){
-    uint8_t tx_header[5], sidl, sidh, eid0, eid8;
+    uint8_t tx_header[5];
+    uint32_t tmp;
 
-    if(ext > 1 || ext < 0){
+    if(ext > 1 || dlc > 8){
         return MCP::MCP_ERROR;
     }
 
-    if(dlc > 8){
-        return MCP::MCP_ERROR;
-    }
-
-    tx_header[0] = can_id >> 3;
-    tx_header[1] = (ext == 0) ? (can_id & MASK_CANID_SIDL) << 5 : (can_id & MASK_CANID_SIDL) << 5 +
-
-    if(ext == 0){
-        tx_header[0] = can_id >> 3;
-        tx_header[1] = (can_id & MASK_CANID_SIDL) << 5;
-        tx_header[2] = 0;
+    if (ext == 0){
+        tx_header[0] = can_id >> 3; //SIDG
+        tx_header[1] = (can_id & MASK_CANID_SIDL) << 5; //SIDL
+        tx_header[2] = 0;   //EID0
         tx_header[3] = 0;
-        tx_header[4] = dlc;
+    }else{
+        tmp = can_id;
 
-        switch(tx){
-            case MCP::TXB0:
-                writeRegister(SPI_LDBF_TXB0SIDH, 5, tx_header);
-                break;
-            case MCP::TXB1:
-                writeRegister(SPI_LDBF_TXB1SIDH, 5, tx_header);
-                break;
-            case MCP::TXB2:
-                writeRegister(SPI_LDBF_TXB2SIDH, 5, tx_header);
-                break;
-        }
+        tx_header[0] = tmp >>= 3;
+        tx_header[3] = tmp >>= 8;
+        tx_header[2] = tmp >>= 8;
+        tmp >>= 8;
+        tx_header[1] = (tmp & MASK_CANID_EID1716) + ((can_id & MASK_CANID_SIDL) << 5) + 8;
     }
 
+    tx_header[4] = dlc;
+
+    switch(tx){
+        case MCP::TXB0:
+            writeRegister(SPI_LDBF_TXB0SIDH, 5, tx_header);
+            break;
+        case MCP::TXB1:
+            writeRegister(SPI_LDBF_TXB1SIDH, 5, tx_header);
+            break;
+        case MCP::TXB2:
+            writeRegister(SPI_LDBF_TXB2SIDH, 5, tx_header);
+            break;
+    }
+
+    return MCP::MCP_OK;
 }
 
 
