@@ -74,15 +74,27 @@
     #define TXTRSCTRL   0x0D
     //End REGISTER
 
+    //Start REGISTER BITS
+    #define ABTF        0x40
+    #define MLAO        0x20
+    #define TXERR       0x10
+    //End REGISTER BITS
+
     //Start MASK CONSTANT
     #define MASK_MODE               0xE0
     #define MASK_PRIORITY           0x03
     #define MASK_CANID_SIDL         (uint32_t) 0x00000007
     #define MASK_CANID_EID1716      (uint32_t) 0x00000003
+    #define MASK_TXREQ             0x08
     //End MASK CONSTANT
 
     //Start CONSTANT
     #define MAX_TX_DATA_LEN     8
+    #define SIDH                0
+    #define SIDL                1
+    #define EID8                2
+    #define EID0                3
+    #define DLC                 4
     //End CONSTANT
 
     class MCP{

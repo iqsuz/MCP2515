@@ -169,7 +169,7 @@ tx should be MCP::TXBn type, tx_priority should be MCP::TXBn_PRIORITY.
 */
 
 MCP::MCP_RETVAL MCP::sendMessage(MCP::TXBn tx, uint32_t can_id, uint8_t ext, uint8_t dlc, uint8_t *data){
-    uint8_t tx_header[5];
+    uint8_t tx_header[5], ctrl;
     uint32_t tmp;
 
     if(ext > 1 || dlc > 8){
@@ -177,31 +177,52 @@ MCP::MCP_RETVAL MCP::sendMessage(MCP::TXBn tx, uint32_t can_id, uint8_t ext, uin
     }
 
     if (ext == 0){
-        tx_header[0] = can_id >> 3; //SIDG
-        tx_header[1] = (can_id & MASK_CANID_SIDL) << 5; //SIDL
-        tx_header[2] = 0;   //EID0
-        tx_header[3] = 0;
+        tx_header[SIDH] = can_id >> 3; //SIDG
+        tx_header[SIDL] = (can_id & MASK_CANID_SIDL) << 5; //SIDL
+        tx_header[EID8] = 0;   //EID0
+        tx_header[EID0] = 0;
     }else{
         tmp = can_id;
 
-        tx_header[0] = tmp >>= 3;
-        tx_header[3] = tmp >>= 8;
-        tx_header[2] = tmp >>= 8;
+        tx_header[SIDH] = tmp >>= 3;
+        tx_header[EID0] = tmp >>= 8;
+        tx_header[EID8] = tmp >>= 8;
         tmp >>= 8;
-        tx_header[1] = (tmp & MASK_CANID_EID1716) + ((can_id & MASK_CANID_SIDL) << 5) + 8;
+        tx_header[SIDL] = (tmp & MASK_CANID_EID1716) + ((can_id & MASK_CANID_SIDL) << 5) + 8;
     }
 
-    tx_header[4] = dlc;
+    tx_header[DLC] = dlc;
 
     switch(tx){
         case MCP::TXB0:
             writeRegister(SPI_LDBF_TXB0SIDH, 5, tx_header);
+            bitModify(TXB0CTRL, MASK_TXREQ, MASK_TXREQ);
+            ctrl = readRegister(TXB0CTRL);
+
+            if((ctrl & (ABTF | MLAO | TXERR)) != 0){
+                return MCP::MCP_ERROR;
+            }
+
             break;
         case MCP::TXB1:
             writeRegister(SPI_LDBF_TXB1SIDH, 5, tx_header);
+            bitModify(TXB1CTRL, MASK_TXREQ, MASK_TXREQ);
+            ctrl = readRegister(TXB0CTRL);
+
+            if((ctrl & (ABTF | MLAO | TXERR)) != 0){
+                return MCP::MCP_ERROR;
+            }
+
             break;
         case MCP::TXB2:
             writeRegister(SPI_LDBF_TXB2SIDH, 5, tx_header);
+            bitModify(TXB2CTRL, MASK_TXREQ, MASK_TXREQ);
+            ctrl = readRegister(TXB0CTRL);
+
+            if((ctrl & (ABTF | MLAO | TXERR)) != 0){
+                return MCP::MCP_ERROR;
+            }
+
             break;
     }
 
