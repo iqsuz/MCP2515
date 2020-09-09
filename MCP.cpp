@@ -157,7 +157,6 @@ tx should be MCP::TXBn type, tx_priority should be MCP::TXBn_PRIORITY.
 */
 MCP::MCP_RETVAL MCP::sendMessage(MCP::TXBn tx, uint32_t can_id, uint8_t ext, uint8_t dlc, uint8_t *data){
     uint8_t tx_header[5], ctrl, is_pending;
-    uint32_t tmp;
 
     is_pending = (readRegister(tx) & MASK_TXREQ) >> 3;
 
@@ -181,34 +180,16 @@ MCP::MCP_RETVAL MCP::sendMessage(MCP::TXBn tx, uint32_t can_id, uint8_t ext, uin
             writeRegister(SPI_LDBF_TXB0SIDH, 5, tx_header);     //Prepared CAN ID.
             writeRegister(TXB0D0, dlc, data);                   //Messages that will be sent are being written on registers.
             bitModify(TXB0CTRL, MASK_TXREQ, MASK_TXREQ);        //Send message.
-            ctrl = readRegister(TXB0CTRL);
-
-            if((ctrl & (ABTF | MLAO | TXERR)) != 0){    //Check wheter there is on of listed errors; Message aborted flag (ABTF), Message Lost arbitration (MLAO), Transmission Error (TXERR)
-                return MCP::MCP_ERROR;
-            }
-
             break;
         case MCP::TXB1:
             writeRegister(SPI_LDBF_TXB1SIDH, 5, tx_header);     //Prepared CAN ID.
             writeRegister(TXB1D0, dlc, data);                   //Messages that will be sent is being written in registers.
             bitModify(TXB1CTRL, MASK_TXREQ, MASK_TXREQ);        //Send message.
-            ctrl = readRegister(TXB1CTRL);
-
-            if((ctrl & (ABTF | MLAO | TXERR)) != 0){    //Check wheter there is on of listed errors; Message aborted flag (ABTF), Message Lost arbitration (MLAO), Transmission Error (TXERR)
-                return MCP::MCP_ERROR;
-            }
-
             break;
         case MCP::TXB2:
             writeRegister(SPI_LDBF_TXB2SIDH, 5, tx_header);     //Prepared CAN ID.
             writeRegister(TXB2D0, dlc, data);                   //Messages that will be sent is being written in registers.
             bitModify(TXB2CTRL, MASK_TXREQ, MASK_TXREQ);        //Send message.
-            ctrl = readRegister(TXB2CTRL);
-
-            if((ctrl & (ABTF | MLAO | TXERR)) != 0){    //Check wheter there is on of listed errors; Message aborted flag (ABTF), Message Lost arbitration (MLAO), Transmission Error (TXERR)
-                return MCP::MCP_ERROR;
-            }
-
             break;
     }
 
