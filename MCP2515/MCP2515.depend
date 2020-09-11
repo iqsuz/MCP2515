@@ -1,10 +1,19 @@
 # depslib dependency file v1.0
-1598828013 source:/home/pi/Desktop/MCP2515/MCP2515/main.cpp
+1599688042 source:/home/pi/Desktop/MCP2515/MCP2515/main.cpp
 	<iostream>
 
-1599011153 source:/home/pi/Desktop/MCP2515/MCP_Hal.cpp
+1599688042 source:/home/pi/Desktop/MCP2515/MCP_Hal.cpp
 	"MCP_Hal.h"
 
-1599011153 /home/pi/Desktop/MCP2515/MCP_Hal.h
+1599688042 /home/pi/Desktop/MCP2515/MCP_Hal.h
 	<stdint.h>
+
+1599223237 source:c:\users\mobis alabama\desktop\mcp2515\mcp_hal.cpp
+	"MCP_Hal.h"
+
+1599223237 c:\users\mobis alabama\desktop\mcp2515\mcp_hal.h
+	<stdint.h>
+
+1599223237 source:c:\users\mobis alabama\desktop\mcp2515\mcp2515\main.cpp
+	<iostream>
 

@@ -144,20 +144,8 @@ tx should be MCP::TXBn type, tx_priority should be MCP::TXBn_PRIORITY.
 uint8_t MCP::setPriority(MCP::TXBn tx, MCP::TXBn_PRIORITY tx_priority){
     uint8_t retVal;
 
-    switch(tx){
-        case MCP::TXB0:
-            bitModify(TXB0CTRL, MASK_PRIORITY, tx_priority);
-            retVal = readRegister(TXB0CTRL);
-            break;
-        case MCP::TXB1:
-            bitModify(TXB1CTRL, MASK_PRIORITY, tx_priority);
-            retVal = readRegister(TXB0CTRL);
-            break;
-        case MCP::TXB2:
-            bitModify(TXB2CTRL, MASK_PRIORITY, tx_priority);
-            retVal = readRegister(TXB1CTRL);
-            break;
-    }
+    bitModify(tx, MASK_PRIORITY, tx_priority);
+    retVal = readRegister(tx);
 
     return retVal;
 }
@@ -167,67 +155,102 @@ uint8_t MCP::setPriority(MCP::TXBn tx, MCP::TXBn_PRIORITY tx_priority){
 /*This function set priority of TX buffer in four different levels.
 tx should be MCP::TXBn type, tx_priority should be MCP::TXBn_PRIORITY.
 */
-
 MCP::MCP_RETVAL MCP::sendMessage(MCP::TXBn tx, uint32_t can_id, uint8_t ext, uint8_t dlc, uint8_t *data){
-    uint8_t tx_header[5], ctrl;
-    uint32_t tmp;
+    uint8_t tx_header[5], is_pending;
+
+    is_pending = (readRegister(tx) & MASK_TXREQ) >> 3;
+
+    if(is_pending){
+        return MCP::MCP_ERROR;
+    }
 
     if(ext > 1 || dlc > 8){
         return MCP::MCP_ERROR;
     }
 
-    if (ext == 0){
-        tx_header[SIDH] = can_id >> 3; //SIDG
-        tx_header[SIDL] = (can_id & MASK_CANID_SIDL) << 5; //SIDL
-        tx_header[EID8] = 0;   //EID0
-        tx_header[EID0] = 0;
-    }else{
-        tmp = can_id;
-
-        tx_header[SIDH] = tmp >>= 3;
-        tx_header[EID0] = tmp >>= 8;
-        tx_header[EID8] = tmp >>= 8;
-        tmp >>= 8;
-        tx_header[SIDL] = (tmp & MASK_CANID_EID1716) + ((can_id & MASK_CANID_SIDL) << 5) + 8;
+    {
+        uint8_t TXBnDm_flush[8]{};
+        writeRegister((tx+6), 8, TXBnDm_flush);   //TXBnCTRL + 6 = TXBnDm, therefore added +6 to TXBnCTRL to prevent switch case redundant.
     }
 
-    tx_header[DLC] = dlc;
+    _parseID(tx_header, can_id, ext, dlc, 0);
 
     switch(tx){
         case MCP::TXB0:
-            writeRegister(SPI_LDBF_TXB0SIDH, 5, tx_header);
-            bitModify(TXB0CTRL, MASK_TXREQ, MASK_TXREQ);
-            ctrl = readRegister(TXB0CTRL);
-
-            if((ctrl & (ABTF | MLAO | TXERR)) != 0){
-                return MCP::MCP_ERROR;
-            }
-
+            writeRegister(SPI_LDBF_TXB0SIDH, 5, tx_header);     //Prepared CAN ID.
+            writeRegister(TXB0D0, dlc, data);                   //Messages that will be sent are being written on registers.
+            bitModify(TXB0CTRL, MASK_TXREQ, MASK_TXREQ);        //Send message.
             break;
         case MCP::TXB1:
-            writeRegister(SPI_LDBF_TXB1SIDH, 5, tx_header);
-            bitModify(TXB1CTRL, MASK_TXREQ, MASK_TXREQ);
-            ctrl = readRegister(TXB0CTRL);
-
-            if((ctrl & (ABTF | MLAO | TXERR)) != 0){
-                return MCP::MCP_ERROR;
-            }
-
+            writeRegister(SPI_LDBF_TXB1SIDH, 5, tx_header);     //Prepared CAN ID.
+            writeRegister(TXB1D0, dlc, data);                   //Messages that will be sent is being written in registers.
+            bitModify(TXB1CTRL, MASK_TXREQ, MASK_TXREQ);        //Send message.
             break;
         case MCP::TXB2:
-            writeRegister(SPI_LDBF_TXB2SIDH, 5, tx_header);
-            bitModify(TXB2CTRL, MASK_TXREQ, MASK_TXREQ);
-            ctrl = readRegister(TXB0CTRL);
-
-            if((ctrl & (ABTF | MLAO | TXERR)) != 0){
-                return MCP::MCP_ERROR;
-            }
-
+            writeRegister(SPI_LDBF_TXB2SIDH, 5, tx_header);     //Prepared CAN ID.
+            writeRegister(TXB2D0, dlc, data);                   //Messages that will be sent is being written in registers.
+            bitModify(TXB2CTRL, MASK_TXREQ, MASK_TXREQ);        //Send message.
             break;
     }
 
     return MCP::MCP_OK;
 }
 
+/********************************************************************/
+/*This function parse given ID based on  TX_SIDL, TX_SIDH, TX_EID8, TX_EID0,
+TX_DLC registers structure and returns on array given in *parser_id.
+*/
+void MCP::_parseID(uint8_t *parsed_id, uint32_t can_id, uint8_t ext, uint8_t dlc, uint8_t rtr){
+    if (ext == 0){
+        parsed_id[SIDL] = can_id << 5; //SIDL
+        parsed_id[SIDH] = can_id >> 3; //SIDG
+        parsed_id[EID8] = 0;    //EID8
+        parsed_id[EID0] = 0;    //EID0
+    }else{
+        parsed_id[SIDL] = can_id << 5;     //Not completed yet. EXT bit and EID17, EID16 bit should be added here.
+        parsed_id[SIDH] = can_id >>= 3;    //SIDH
+        parsed_id[EID0] = can_id >>= 8;    //EID0
+        parsed_id[EID8] = can_id >>= 8;    //EID8
+        can_id >>= 8;
+        parsed_id[SIDL] = parsed_id[SIDL] + 8 + (can_id & MASK_CANID_EID1716);   // Added +8 to activate extended ID.    //SIDL
+    }
+
+    parsed_id[DLC] = dlc | (rtr << 6);   //DLC
+
+}
+
+/********************************************************************/
+/*This function determines if given TX buffer has pending transmission.
+If there is pending transmission this function returns 1.
+If there is no pending transmission this function returns 0.
+*/
+uint8_t MCP::isTXPending(MCP::TXBn tx){
+    uint8_t retVal;
+
+    retVal = (readRegister(tx) & MASK_TXREQ) >> 3;
+
+    return retVal;
+}
+
+/********************************************************************/
+/*This function determines if given TX buffer has pending transmission.
+If there is pending transmission this function returns 1.
+If there is no pending transmission this function returns 0.
+*/
+uint8_t MCP::getAvailableTXBuffer(){
+    uint8_t retVal;
+
+    retVal = isTXPending(MCP::TXB0) ?
+    (isTXPending(MCP::TXB1) ?
+        (isTXPending(MCP::TXB2) ?
+            (0)
+            : (MCP::TXB2))
+        : (MCP::TXB1))
+    : (MCP::TXB0);
+
+    return retVal;
+}
+
+//RXnIF (CANINTF) should be cleared after reading message from receiving buffer (either RXB1 or RXB2). Otherwise MAB will not transfer accepted message into RX buffer at which its IF is not cleared by MCU.
 
 

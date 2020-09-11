@@ -85,7 +85,8 @@
     #define MASK_PRIORITY           0x03
     #define MASK_CANID_SIDL         (uint32_t) 0x00000007
     #define MASK_CANID_EID1716      (uint32_t) 0x00000003
-    #define MASK_TXREQ             0x08
+    #define MASK_TXREQ              0x08
+    #define MASK_RTR                0x40
     //End MASK CONSTANT
 
     //Start CONSTANT
@@ -99,6 +100,7 @@
 
     class MCP{
     private:
+        void _parseID(uint8_t *, uint32_t, uint8_t, uint8_t, uint8_t);
 
     public:
         enum CHIP_MODE : uint8_t {
@@ -110,9 +112,9 @@
         };
 
         enum TXBn : uint8_t {
-            TXB0,
-            TXB1,
-            TXB2
+            TXB0 = TXB0CTRL,
+            TXB1 = TXB1CTRL,
+            TXB2 = TXB2CTRL
         };
 
         enum TXBn_PRIORITY : uint8_t {
@@ -120,14 +122,6 @@
             PRIORITY_LOW,
             PRIORITY_INTERMEDIATE,
             PRIORITY_HIGH
-        };
-
-        struct CanFrame {
-            uint32_t can_id;
-            uint8_t ext;
-            uint8_t rtr;
-            uint8_t dlc;
-            uint8_t data[MAX_TX_DATA_LEN];
         };
 
         enum MCP_RETVAL : uint8_t {
@@ -149,6 +143,8 @@
         uint8_t changeMode(MCP::CHIP_MODE );
         uint8_t setPriority(MCP::TXBn, MCP::TXBn_PRIORITY );
         MCP_RETVAL sendMessage(MCP::TXBn, uint32_t, uint8_t, uint8_t, uint8_t *);
+        uint8_t isTXPending(MCP::TXBn );
+        uint8_t getAvailableTXBuffer();
 
     };
 
