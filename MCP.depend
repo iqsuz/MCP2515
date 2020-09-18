@@ -1,0 +1,4 @@
+# depslib dependency file v1.0
+1600390527 source:/home/pi/Desktop/MCP/main.cpp
+	<iostream>
+
