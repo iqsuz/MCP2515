@@ -13,12 +13,12 @@ void MCP::reset(){
 
 /********************************************************************/
 /*Reads register of given address.*/
-uint8_t MCP::readRegister(uint8_t regAddress){
+uint8_t MCP::readRegister(uint8_t reg_add){
     uint8_t retVal;
 
     CSLow();
     SPIWrite(SPI_RD);
-    SPIWrite(regAddress);
+    SPIWrite(reg_add);
     retVal = SPIWrite(SPI_DUMMY);
     CSHigh();
 
@@ -29,10 +29,10 @@ uint8_t MCP::readRegister(uint8_t regAddress){
 /********************************************************************/
 /*Reads consecutive registers with length of len,
 returned values stored in buff pointer array. */
-void MCP::readRegister(uint8_t regAddress, uint8_t len, uint8_t *buff){
+void MCP::readRegister(uint8_t reg_add, uint8_t len, uint8_t *buff){
     CSLow();
     SPIWrite(SPI_RD);
-    SPIWrite(regAddress);
+    SPIWrite(reg_add);
 
     while(len--){
         *buff++ = SPIWrite(SPI_DUMMY);
@@ -43,20 +43,20 @@ void MCP::readRegister(uint8_t regAddress, uint8_t len, uint8_t *buff){
 
 /********************************************************************/
 /*Writes given data to given register address.*/
-void MCP::writeRegister(uint8_t regAddress, uint8_t data){
+void MCP::writeRegister(uint8_t reg_add, uint8_t data){
     CSLow();
     SPIWrite(SPI_WR);
-    SPIWrite(regAddress);
+    SPIWrite(reg_add);
     SPIWrite(data);
     CSHigh();
 }
 
 /********************************************************************/
 /*Write consecutive dataset to given address with lenght of len.*/
-void MCP::writeRegister(uint8_t regAddress, uint8_t len, uint8_t *data){
+void MCP::writeRegister(uint8_t reg_add, uint8_t len, uint8_t *data){
     CSLow();
     SPIWrite(SPI_WR);
-    SPIWrite(regAddress);
+    SPIWrite(reg_add);
 
     while(len--){
         SPIWrite(*data++);
@@ -107,18 +107,18 @@ uint8_t MCP::readRXStat(){
 /*This function manipulates bits of given register address.
 Data in the register is masked with mask parameter
 then masked bits are changed with data.*/
-uint8_t MCP::bitModify(uint8_t regAddress, uint8_t mask, uint8_t data){
+uint8_t MCP::bitModify(uint8_t reg_add, uint8_t mask, uint8_t data){
     uint8_t retVal;
 
     CSLow();
     SPIWrite(SPI_BIT_MOD);
-    SPIWrite(regAddress);
+    SPIWrite(reg_add);
     SPIWrite(mask);
     SPIWrite(data);
     CSHigh();
 
     CSLow();
-    retVal = readRegister(regAddress);
+    retVal = readRegister(reg_add);
     CSHigh();
 
     return retVal;
@@ -140,10 +140,10 @@ uint8_t MCP::changeMode(MCP::CHIP_MODE mode){
 /*This function set priority of TX buffer in four different levels.
 tx should be MCP::TXBn type, tx_priority should be MCP::TXBn_PRIORITY.
 */
-uint8_t MCP::setPriority(MCP::TXBn tx, MCP::TXBn_PRIORITY txPriority){
+uint8_t MCP::setPriority(MCP::TXBn tx, MCP::TXBn_PRIORITY tx_priority){
     uint8_t retVal;
 
-    bitModify(tx, MASK_PRIORITY, txPriority);
+    bitModify(tx, MASK_PRIORITY, tx_priority);
     retVal = readRegister(tx);
 
     return retVal;
@@ -154,22 +154,17 @@ uint8_t MCP::setPriority(MCP::TXBn tx, MCP::TXBn_PRIORITY txPriority){
 tx should be MCP::TXBn type, tx_priority should be MCP::TXBn_PRIORITY.
 */
 MCP::MCP_RETVAL MCP::sendMessage(MCP::TXBn tx, uint32_t can_id, uint8_t ext, uint8_t dlc, uint8_t *data){
-    uint8_t tx_header[5], is_pending;
+    uint8_t tx_header[5];
 
-    is_pending = (readRegister(tx) & MASK_TXREQ) >> 3;
-
-    if(is_pending){
-        return MCP::MCP_ERROR;
+    if(isTXPending(tx)){
+        return MCP::MCP_TX_FULL;
     }
 
     if(ext > 1 || dlc > 8){
-        return MCP::MCP_ERROR;
+        return MCP::MCP_EXT_DLC_ERROR;
     }
 
-    {
-        uint8_t TXBnDm_flush[8]{};
-        writeRegister((tx+6), 8, TXBnDm_flush);   //TXBnCTRL + 6 = TXBnDm, therefore added +6 to TXBnCTRL to prevent switch case redundant.
-    }
+    _flushTXBnData(tx);
 
     _parseID(tx_header, can_id, ext, dlc, 0);
 
@@ -214,7 +209,6 @@ void MCP::_parseID(uint8_t *parsed_id, uint32_t can_id, uint8_t ext, uint8_t dlc
     }
 
     parsed_id[DLC] = dlc | (rtr << 6);   //DLC
-
 }
 
 /********************************************************************/
@@ -223,28 +217,21 @@ If there is pending transmission this function returns 1.
 If there is no pending transmission this function returns 0.
 */
 uint8_t MCP::isTXPending(MCP::TXBn tx){
-    uint8_t retVal;
-
-    retVal = (readRegister(tx) & MASK_TXREQ) >> 3;
-
-    return retVal;
+    return (readRegister(tx) & MASK_TXREQ) >> 3;
 }
 
 /********************************************************************/
-/*This function determines if given TX buffer has pending transmission.
-If there is pending transmission this function returns 1.
-If there is no pending transmission this function returns 0.
+/*This function flush data slot of given TX buffer.
 */
-uint8_t MCP::getAvailableTXBuffer(){
-    uint8_t retVal;
-
-    retVal = isTXPending(MCP::TXB0) ?
-    (isTXPending(MCP::TXB1) ?
-        (isTXPending(MCP::TXB2) ?
-            (0)
-            : (MCP::TXB2))
-        : (MCP::TXB1))
-    : (MCP::TXB0);
-
-    return retVal;
+void MCP::_flushTXBnData(MCP::TXBn tx){
+    uint8_t TXBnDm_flush[8]{};
+    writeRegister((tx+6), 8, TXBnDm_flush); //tx + 6 = TXBnDm
 }
+
+
+
+//RXBnCTRL will indicate acceptance filter number that enabled reception and whether the
+//received message is a RTR.
+//roll over if a message comply acceotence rule of RXB0 but it is occupied with another valid data
+//overflow error will occur. If you active roll over, regardless of RXB1 acceptence filter and mask
+//data will be transfered to RXB1.

@@ -12,7 +12,7 @@ void MCPHal::SPIInit(uint8_t chipSelect){
     //Run SPI with defined settings in MCP_Hal.h library.
     SPI.begin();
     SPI.beginTransaction(SPISettings(SPI_SPEED, SPI_DATA_ORDER, SPI_MODE));
-    SPI.endTransaction();   //SPI reserves its previous settings even if this function is called.
+    //SPI.endTransaction();   //SPI reserves its previous settings even if this function is called.
 }
 
 void MCPHal::CSLow(){

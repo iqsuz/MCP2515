@@ -99,8 +99,13 @@
     #define DLC                 4
     //End CONSTANT
 
+
+/*Class is inherited from MCPHal to maintain hardware abstraction.
+If you are using different development kit, you might need to change MCPHal class.*/
 class MCP : public MCPHal {
     private:
+
+    public:
         enum CHIP_MODE : uint8_t {
             NORMAL_MODE = 0x00,
             SLEEP_MODE = 0x20,
@@ -124,12 +129,14 @@ class MCP : public MCPHal {
 
         enum MCP_RETVAL : uint8_t {
             MCP_ERROR,
-            MCP_OK     //delete this
-
+            MCP_TX_FULL,
+            MCP_EXT_DLC_ERROR,
+            MCP_OK
         };
 
     private:
         void _parseID(uint8_t *, uint32_t, uint8_t, uint8_t, uint8_t);
+        void _flushTXBnData(MCP::TXBn );
 
     public:
         MCP(uint8_t );
@@ -145,6 +152,6 @@ class MCP : public MCPHal {
         uint8_t setPriority(MCP::TXBn, MCP::TXBn_PRIORITY );
         MCP_RETVAL sendMessage(MCP::TXBn, uint32_t, uint8_t, uint8_t, uint8_t *);
         uint8_t isTXPending(MCP::TXBn );
-        uint8_t getAvailableTXBuffer();
+        MCP::TXBn getAvailableTXBuffer();
 };
 #endif // MCP_H_
