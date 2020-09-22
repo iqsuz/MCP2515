@@ -230,8 +230,26 @@ void MCP::_flushTXBnData(MCP::TXBn tx){
 
 
 
+MCP::MCP_RETVAL MCP::readMessage(uint32_t *can_id, uint8_t *msg, uint8_t *ext, uint8_t *rtr){
+    if(!isRXAvailable()){
+        return MCP::MCP_NO_MSG_AVAILABLE;
+    }
+
+
+
+
+}
+
+
+bool MCP::isRXAvailable(){
+    return ((readRegister(CANINTF) & MASK_RX_INTF) > 0);
+}
+
+
 //RXBnCTRL will indicate acceptance filter number that enabled reception and whether the
 //received message is a RTR.
 //roll over if a message comply acceotence rule of RXB0 but it is occupied with another valid data
 //overflow error will occur. If you active roll over, regardless of RXB1 acceptence filter and mask
 //data will be transfered to RXB1.
+//CANINTF should be removed after message reading. Otherwise MAB will not move accepted messages to
+//RX Buffers.
