@@ -29,7 +29,7 @@
     //Start REGISTERS
     #define CANCTRL     0x0F
     #define CANSTAT     0x0E
-    //TX Responsible Registers
+    //TX Registers
     #define TXB0CTRL    0x30
     #define TXB1CTRL    0x40
     #define TXB2CTRL    0x50
@@ -72,8 +72,45 @@
     #define TXB0DLC     0x35
     #define TXB1DLC     0x45
     #define TXB2DLC     0x55
-    #define TXTRSCTRL   0x0D
-    //End REGISTER
+    #define TXRTSCTRL   0x0D
+    //End TX REGISTER
+
+    //Start RX REGISTERS
+    #define RXB0CTRL    0x60
+    #define RXB1CTRL    0x70
+    #define BFPCTRL     0x0C
+    #define RXB0SIDH    0x61
+    #define RXB1SIDH    0x71
+    #define RXB0SIDL    0x62
+    #define RXB1SIDL    0x72
+    #define RXB0EID8    0x63
+    #define RXB1EID8    0x73
+    #define RXB0EID0    0x64
+    #define RXB1EID0    0x74
+    #define RXB0DLC     0x65
+    #define RXB1DLC     0x75
+    #define RXB0D0      0x66
+    #define RXB0D1      0x67
+    #define RXB0D2      0x68
+    #define RXB0D3      0x69
+    #define RXB0D4      0x6A
+    #define RXB0D5      0x6B
+    #define RXB0D6      0x6C
+    #define RXB0D7      0x6D
+    #define RXB1D0      0x76
+    #define RXB1D1      0x77
+    #define RXB1D2      0x78
+    #define RXB1D3      0x79
+    #define RXB1D4      0x7A
+    #define RXB1D5      0x7B
+    #define RXB1D6      0x7C
+    #define RXB1D7      0x7D
+    //END RX REGISTERS
+
+    //Start CAN INT SOURCES and FLAGS
+    #define CANINTE     0x2B
+    #define CANINTF     0x2C
+    //End CAN INT SOURCES and FLAGS
 
     //Start REGISTER BITS
     #define ABTF        0x40
@@ -88,6 +125,7 @@
     #define MASK_CANID_EID1716      (uint32_t) 0x00000003
     #define MASK_TXREQ              0x08
     #define MASK_RTR                0x40
+    #define MASK_RX_INTF            0x03
     //End MASK CONSTANT
 
     //Start CONSTANT
@@ -131,6 +169,7 @@ class MCP : public MCPHal {
             MCP_ERROR,
             MCP_TX_FULL,
             MCP_EXT_DLC_ERROR,
+            MCP_NO_MSG_AVAILABLE,
             MCP_OK
         };
 
