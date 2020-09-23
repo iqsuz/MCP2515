@@ -27,4 +27,3 @@ uint8_t MCPHal::SPIWrite(uint8_t data){
     return SPI.transfer(data);
 }
 
-

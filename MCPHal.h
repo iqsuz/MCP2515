@@ -1,9 +1,11 @@
 #ifndef MCPHAL_H_
 #define MCPHAL_H_
     #include <stdint.h>
-    //#include <SPI.h>
+    #include <SPI.h>
 
-
+    #define SPI_SPEED 16000000
+    #define SPI_DATA_ORDER MSBFIRST
+    #define SPI_MODE SPI_MODE1
 
 class MCPHal {
     protected:

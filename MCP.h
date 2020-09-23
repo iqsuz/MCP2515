@@ -123,9 +123,17 @@
     #define MASK_PRIORITY           0x03
     #define MASK_CANID_SIDL         (uint32_t) 0x00000007
     #define MASK_CANID_EID1716      (uint32_t) 0x00000003
-    #define MASK_TXREQ              0x08
+    #define MASK_TX_REQ             0x08
     #define MASK_RTR                0x40
-    #define MASK_RX_INTF            0x03
+    #define MASK_RXB0_STAT          0x01
+    #define MASK_RXB1_STAT          0x02
+    #define MASK_TXB0_STAT          0x04
+    #define MASK_TXB1_STAT          0x10
+    #define MASK_TXB2_STAT          0x40
+    #define MASK_EXT                0x08
+    #define MASK_EXT_RTR            0x40
+    #define MASK_SRR                0x10
+    #define MASK_RX_DLC             0x0F
     //End MASK CONSTANT
 
     //Start CONSTANT
@@ -158,6 +166,11 @@ class MCP : public MCPHal {
             TXB2 = TXB2CTRL
         };
 
+        enum RXBn : uint8_t {
+            RXB0 = RXB0CTRL,
+            RXB1 = RXB1CTRL
+        };
+
         enum TXBn_PRIORITY : uint8_t {
             PRIORITY_TRIVIAL,
             PRIORITY_LOW,
@@ -168,29 +181,40 @@ class MCP : public MCPHal {
         enum MCP_RETVAL : uint8_t {
             MCP_ERROR,
             MCP_TX_FULL,
-            MCP_EXT_DLC_ERROR,
+            MCP_DLC_ERROR,
             MCP_NO_MSG_AVAILABLE,
             MCP_OK
         };
 
+        enum RX_BUFF_STAT : uint8_t{
+            RXB0_AVAILABLE,
+            RXB1_AVAILABLE,
+            RXB0_RXB1_AVAILABLE,
+            NO_MESSAGE_AVAILABLE
+        };
+
     private:
-        void _parseID(uint8_t *, uint32_t, uint8_t, uint8_t, uint8_t);
+        MCP::MCP_RETVAL _sendMessage(MCP::TXBn , uint32_t , bool , uint8_t , uint8_t *, bool );
+        void _parseID(uint8_t *, uint32_t , bool , uint8_t , bool );
         void _flushTXBnData(MCP::TXBn );
+
 
     public:
         MCP(uint8_t );
         void reset();
         uint8_t readRegister(uint8_t );
-        void readRegister(uint8_t, uint8_t, uint8_t *);
-        void writeRegister(uint8_t, uint8_t );
-        void writeRegister(uint8_t, uint8_t, uint8_t *);
+        void readRegister(uint8_t , uint8_t , uint8_t *);
+        void writeRegister(uint8_t , uint8_t );
+        void writeRegister(uint8_t , uint8_t , uint8_t *);
         uint8_t readStatus();
         uint8_t readRXStat();
-        uint8_t bitModify(uint8_t, uint8_t, uint8_t );
+        uint8_t bitModify(uint8_t , uint8_t , uint8_t );
         uint8_t changeMode(MCP::CHIP_MODE );
-        uint8_t setPriority(MCP::TXBn, MCP::TXBn_PRIORITY );
-        MCP_RETVAL sendMessage(MCP::TXBn, uint32_t, uint8_t, uint8_t, uint8_t *);
-        uint8_t isTXPending(MCP::TXBn );
-        MCP::TXBn getAvailableTXBuffer();
+        uint8_t setPriority(MCP::TXBn , MCP::TXBn_PRIORITY );
+        bool isTXAvailable(MCP::TXBn );
+        MCP::MCP_RETVAL sendMessage(MCP::TXBn , uint32_t , bool , uint8_t , uint8_t *);
+        MCP::MCP_RETVAL sendMessage(uint32_t , bool , uint8_t , uint8_t *);
+        MCP::MCP_RETVAL sendRTR(MCP::TXBn , uint32_t , bool );
+        MCP::MCP_RETVAL sendRTR(uint32_t , bool );
 };
 #endif // MCP_H_
