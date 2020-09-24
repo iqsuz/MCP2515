@@ -278,21 +278,24 @@ MCP::MCP_RETVAL MCP::_sendMessage(MCP::TXBn tx, uint32_t can_id, bool ext, uint8
 /*This function parse given id into tx_header array based on chips register instruction.
 */
 void MCP::_parseID(uint8_t *parsed_id, uint32_t can_id, bool ext, uint8_t dlc, bool rtr){
-    if (ext == 0){
-        parsed_id[SIDL] = can_id << 5; //SIDL
-        parsed_id[SIDH] = can_id >> 3; //SIDG
-        parsed_id[EID8] = 0;    //EID8
-        parsed_id[EID0] = 0;    //EID0
+    uint16_t can_id_h;
+
+    can_id_h = (uint16_t)(can_id >> 16);    //2 Most Significant Bytes of 32bit can id.
+
+    if (!ext){
+        parsed_id[SIDL] = (uint8_t)((can_id_h & 0x001C) << 3);    //SIDL  //0x08 is to set ext bit in SIDL register.
+        parsed_id[SIDH] = (uint8_t)((can_id_h & 0x1FE0) >> 5);    //SIDH
+        parsed_id[EID0] = 0;
+        parsed_id[EID8] = 0;
+        can
     }else{
-        parsed_id[SIDL] = can_id << 5;     //Not completed yet. EXT bit and EID17, EID16 bit should be added here.
-        parsed_id[SIDH] = can_id >>= 3;    //SIDH
-        parsed_id[EID0] = can_id >>= 8;    //EID0
-        parsed_id[EID8] = can_id >>= 8;    //EID8
-        can_id >>= 8;
-        parsed_id[SIDL] = parsed_id[SIDL] + 8 + (can_id & MASK_CANID_EID1716);   // Added +8 to activate extended ID.    //SIDL
+        parsed_id[EID0] = (uint8_t)can_id;      //EID0
+        parsed_id[EID8] = (uint8_t)(can_id >> 8);       //EID8
+        parsed_id[SIDL] = (uint8_t)(can_id_h & 0x0003) | 0x08 | (uint8_t)((can_id_h & 0x001C) << 3);    //SIDL  //0x08 is to set ext bit in SIDL register.
+        parsed_id[SIDH] = (uint8_t)((can_id_h & 0x1FE0) >> 5);      //SIDH
     }
 
-    parsed_id[DLC] = dlc | (static_cast<uint8_t>(rtr) << 6);   //DLC
+    parsed_id[DLC] = dlc | (rtr ? 0x40 : 0x00); //DLC
 }
 
 /********************************************************************/
@@ -316,22 +319,46 @@ MCP::MCP_RETVAL MCP::readMessage(MCP::RXBn rx, uint32_t *can_id, uint8_t *data, 
     readRegister((rx + 0x01), 5, msg);
 
     //merge dispersed uint8_t data into uin32_t can_id
-    *ext = static_cast<bool>((msg[SIDL] & MASK_EXT) > 0);
-    *rtr = *ext ? (msg[DLC] & MASK_EXT_RTR) > 0 : (msg[SIDL] & MASK_SRR) > 0
-    *dlc = msg[DLC] & MASK_RX_DLC;
+    *ext = ((msg[SIDL] & 0x08) > 0) ? true : false;
 
-    *can_id = 0;
-    *can_id = (msg[SIDL] >> 5) + (msg[SIDH] << 3);
-
-    if(ext){
-        *can_id += (msg[EID8] << 8);
-        *can_id += (msg[EID0] << 8);
+    if(*ext){
+        *rtr = ((msg[DLC] & 0x40) > 0) ? true : false;
+    }else{
+        *rtr = ((msg[DLC] & 0x10) > 0) ? true : false;
     }
 
+    *dlc = msg[DLC] & 0x0F;
 
+    *can_id = 0;
+
+    if(*ext){
+        *can_id |= msg[SIDH];
+        *can_id <<= 3;
+        *can_id |= (msg[SIDL] >> 5);
+        *can_id <<= 2;
+        *can_id |= (msg[SIDL] & 0x03);
+        *can_id <<= 8;
+        *can_id |= msg[EID8];
+        *can_id <<= 8;
+        *can_id |= msg[EID0];
+    }else{
+        *can_id |= (((uint16_t)msg[SIDH]) << 3 | (uint16_t)msg[SIDL] >> 5);
+    }
 
     //receive data if message is not rtr.
+    if(!rtr){
+        readRegister((rx + 0x06), dlc, data);
+    }else{
+        dlc = 0;
+    }
+
     //clear interrupt flags to get empty buffer.
+    switch(rx){
+        case MCP::RXB0:
+            bitModify(CANINTF, 0x01, 0x00);
+        case MCP::RXB1:
+            bitModify(CANINTF, 0x02, 0x00);
+    }
 }
 
 bool MCP::isRXAvailable(MCP::RXBn rx){
