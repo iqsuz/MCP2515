@@ -186,12 +186,6 @@ class MCP : public MCPHal {
             MCP_OK
         };
 
-        enum RX_BUFF_STAT : uint8_t{
-            RXB0_AVAILABLE,
-            RXB1_AVAILABLE,
-            RXB0_RXB1_AVAILABLE,
-            NO_MESSAGE_AVAILABLE
-        };
 
     private:
         MCP::MCP_RETVAL _sendMessage(MCP::TXBn , uint32_t , bool , uint8_t , uint8_t *, bool );

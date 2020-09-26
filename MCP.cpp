@@ -310,15 +310,15 @@ void MCP::_flushTXBnData(MCP::TXBn tx){
 MCP::MCP_RETVAL MCP::readMessage(MCP::RXBn rx, uint32_t *can_id, uint8_t *data, bool *ext, uint8_t *dlc, bool *rtr){
     uint8_t msg[5] {};
 
-    //Check if message is available for given RX Buffer.
+    //Check if message is available for given RX buffer.
     if(!isRXAvailable(rx)){
         return MCP::MCP_NO_MSG_AVAILABLE;
     }
 
-    //receive RX header info. this includes id, ext, rtr, dlc informations.
+    //Receive RX header info. this includes ID, EXT, RTR, DLC informations.
     readRegister((rx + 0x01), 5, msg);
 
-    //merge dispersed uint8_t data into uin32_t can_id
+    //Merge dispersed uint8_t data into uin32_t can_id
     *ext = ((msg[SIDL] & 0x08) > 0) ? true : false;
 
     if(*ext){
@@ -345,20 +345,22 @@ MCP::MCP_RETVAL MCP::readMessage(MCP::RXBn rx, uint32_t *can_id, uint8_t *data, 
         *can_id |= (((uint16_t)msg[SIDH]) << 3 | (uint16_t)msg[SIDL] >> 5);
     }
 
-    //receive data if message is not rtr.
+    //Receive message data if message is not RTR.
     if(!rtr){
         readRegister((rx + 0x06), dlc, data);
     }else{
         dlc = 0;
     }
 
-    //clear interrupt flags to get empty buffer.
+    //Clear interrupt flags to get empty buffer for upcoming messages.
     switch(rx){
         case MCP::RXB0:
             bitModify(CANINTF, 0x01, 0x00);
         case MCP::RXB1:
             bitModify(CANINTF, 0x02, 0x00);
     }
+
+    return MCP::MCP_OK;
 }
 
 bool MCP::isRXAvailable(MCP::RXBn rx){
